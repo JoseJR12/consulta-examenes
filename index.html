@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta tu Nota - CEPREUPEU</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-white min-h-screen">
+
+  <!-- Contenedor principal -->
+  <div class="flex justify-center items-center min-h-screen">
+    <div class="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md border-t-4 border-blue-600">
+      <img src="images/logo.png" alt="Logo de CEPREUPEU" class="w-32 mx-auto mb-5" />
+      <h1 class="text-3xl font-extrabold text-center text-blue-800 mb-2">Consulta tu Nota</h1>
+      <p class="text-center text-gray-600 mb-6 text-sm">
+        Bienvenido al sistema de resultados de
+        <span class="font-semibold text-blue-700">CEPREUPEU</span>.
+        Ingresa tu DNI para ver tu desempeño.
+      </p>
+
+      <div class="mb-4">
+        <input
+          type="text"
+          id="dni"
+          class="border border-gray-300 p-3 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Introduce tu DNI"
+        />
+      </div>
+
+      <button
+        class="bg-blue-600 hover:bg-blue-700 transition duration-200 text-white p-3 rounded-md w-full font-medium"
+        onclick="consultar()"
+      >
+        Consultar
+      </button>
+
+      <div id="resultado" class="mt-5"></div>
+    </div>
+  </div>
+
+  <script>
+    async function cargarDatos() {
+      const response = await fetch('examenes.csv');
+      if (!response.ok) {
+        throw new Error('Error al cargar el archivo CSV');
+      }
+      const data = await response.text();
+      const rows = data.split('\n').map(line => line.split(';'));
+      return rows;
+    }
+
+    function getMensajeYColor(nota) {
+      const numNota = parseFloat(nota);
+      const mensajeBase = "No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios que te esfuerzo. (Isaías 41:10) 😊🙌 Les deseamos un feliz fin de semana.";
+      if (isNaN(numNota)) {
+        return { color: "text-gray-500", mensaje: "Nota no disponible" };
+      } else if (numNota < 11) {
+        return { color: "text-red-600", mensaje: mensajeBase };
+      } else {
+        return { color: "text-blue-600", mensaje: mensajeBase };
+      }
+    }
+
+    async function consultar() {
+      const dni = document.getElementById('dni').value.trim();
+      const datos = await cargarDatos();
+      const resultado = datos.find(row => row[1] === dni);
+
+      const divResultado = document.getElementById('resultado');
+      divResultado.innerHTML = '';
+
+      if (resultado) {
+        const nombre = resultado[0];
+        const grupo = resultado[2];
+        const nota = resultado[4];
+        const { color, mensaje } = getMensajeYColor(nota);
+
+        divResultado.innerHTML = `
+          <div class="bg-white border-l-4 border-blue-500 shadow-md rounded-md p-5 text-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Hola, ${nombre}</h2>
+            <p class="text-gray-700"><strong>Grupo:</strong> ${grupo}</p>
+            <p class="mt-3 text-lg font-semibold ${color}"><strong>Nota:</strong> ${nota}</p>
+            <p class="mt-4 text-sm italic text-gray-700">"${mensaje}"</p>
+          </div>
+        `;
+      } else {
+        divResultado.innerHTML = `
+          <div class="bg-red-500 text-white p-3 rounded-md text-center font-semibold shadow">
+            No se encontró ningún registro con ese DNI.
+          </div>
+        `;
+      }
+    }
+  </script>
+
+</body>
+</html>
